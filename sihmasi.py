@@ -83,6 +83,24 @@ def get_file_info(file_path):
         'extension': Path(file_path).suffix.lower()
     }
 
+def extract_gps_data(metadata):
+    """Extract GPS coordinates from metadata"""
+    gps_data = {}
+    
+    if metadata:
+        for line in metadata.split('\n'):
+            line_lower = line.lower()
+            if 'gpslatitude' in line_lower and 'ref' not in line_lower:
+                gps_data['latitude'] = line.split(':', 1)[1].strip() if ':' in line else None
+            elif 'gpslongitude' in line_lower and 'ref' not in line_lower:
+                gps_data['longitude'] = line.split(':', 1)[1].strip() if ':' in line else None
+            elif 'gpsaltitude' in line_lower and 'ref' not in line_lower:
+                gps_data['altitude'] = line.split(':', 1)[1].strip() if ':' in line else None
+            elif 'gpsposition' in line_lower:
+                gps_data['position'] = line.split(':', 1)[1].strip() if ':' in line else None
+    
+    return gps_data
+
 def display_metadata(file_path, metadata, save_output=False):
     """Display extracted metadata in a formatted way"""
     print(f"\n{GREEN}{'='*60}{RESET}")
@@ -96,7 +114,26 @@ def display_metadata(file_path, metadata, save_output=False):
     print(f"    Extension: {file_info['extension']}")
     print(f"    Modified: {file_info['modified']}")
     print(f"    Created: {file_info['created']}")
-    print(f"\n{YELLOW}[*] Metadata:{RESET}\n")
+    
+    # Extract and display GPS data prominently
+    gps_data = extract_gps_data(metadata)
+    if gps_data:
+        print(f"\n{RED}{BOLD}[!] GPS LOCATION FOUND:{RESET}")
+        if 'latitude' in gps_data and gps_data['latitude']:
+            print(f"    {RED}Latitude:{RESET}  {gps_data['latitude']}")
+        if 'longitude' in gps_data and gps_data['longitude']:
+            print(f"    {RED}Longitude:{RESET} {gps_data['longitude']}")
+        if 'position' in gps_data and gps_data['position']:
+            print(f"    {RED}Position:{RESET}  {gps_data['position']}")
+        if 'altitude' in gps_data and gps_data['altitude']:
+            print(f"    {RED}Altitude:{RESET}  {gps_data['altitude']}")
+        
+        # Generate Google Maps link
+        if 'position' in gps_data and gps_data['position']:
+            coords = gps_data['position'].replace(' ', '')
+            print(f"    {RED}Maps Link:{RESET} https://www.google.com/maps?q={coords}")
+    
+    print(f"\n{YELLOW}[*] Complete Metadata:{RESET}\n")
     
     if metadata:
         # Parse and display metadata
